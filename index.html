@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MVP Business & Risk Simulation for VP of Sales</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        .step-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .risk-color { color: #dc2626; }
+        .profit-color { color: #16a34a; }
+        /* Style for inputs and selects */
+        .form-input {
+            border-color: #d1d5db;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .form-input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-xl p-6 md:p-10 border border-indigo-100">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-4xl font-extrabold text-indigo-800">MVP Financial Risk Simulator</h1>
+            <p class="text-gray-600 mt-2">Translate operational decisions and market risks into projected 12-month P&L (Profit & Loss) and Lost Sales.</p>
+        </header>
+
+        <div id="designer-form">
+            
+            <!-- 1. Project Context & Steps -->
+            <section class="mb-8 p-6 bg-indigo-50 rounded-lg">
+                <h2 class="text-2xl font-bold text-indigo-700 mb-4">1. Business Flow Definition</h2>
+                <div class="space-y-4 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Prototype/Product Name:</span>
+                            <input type="text" id="productName" class="mt-1 block w-full form-input" placeholder="e.g., V1.0 Digital Onboarding" value="New Service MVP">
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Target User Segment:</span>
+                            <input type="text" id="targetUser" class="mt-1 block w-full form-input" placeholder="e.g., High-Value Enterprise Clients" value="Target Market">
+                        </label>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Operations Steps (The Process)</h3>
+                <p class="text-sm text-gray-500 mb-4">Define the sequence of actions a customer must complete. Each step introduces a drop-off risk.</p>
+                <div id="flow-steps-container" class="space-y-2">
+                    <!-- Initial Steps populated by JS -->
+                </div>
+                <button onclick="addStep()" class="mt-4 flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    Add Business Step
+                </button>
+            </section>
+
+            <!-- 2. Financial & Success Rate Inputs -->
+            <section class="mb-8 p-6 bg-green-50 rounded-lg border border-green-200">
+                <h2 class="text-2xl font-bold text-green-700 mb-4">2. Financial Assumptions & Base Rates</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Column 1: Pricing -->
+                    <div class="space-y-4">
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Unit Price ($):</span>
+                            <input type="number" id="unitPrice" class="mt-1 block w-full form-input border-green-300" placeholder="e.g., 50" value="50">
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Cost per Unit ($):</span>
+                            <input type="number" id="unitCost" class="mt-1 block w-full form-input border-green-300" placeholder="e.g., 20" value="20">
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Op Cost per Step ($):</span>
+                            <input type="number" id="operationalCostPerStep" class="mt-1 block w-full form-input border-green-300" placeholder="e.g., 100" value="100">
+                            <p class="text-xs text-gray-500 mt-1">Fixed monthly overhead per flow step.</p>
+                        </label>
+                    </div>
+
+                    <!-- Column 2: Volume -->
+                    <div class="space-y-4">
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Monthly Leads / Traffic:</span>
+                            <input type="number" id="unitsSold" class="mt-1 block w-full form-input border-green-300" placeholder="e.g., 1000" value="1000">
+                            <p class="text-xs text-gray-500 mt-1">Total volume entering the flow (Units Started).</p>
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Customer Conversion Rate (Base %):</span>
+                            <input type="number" id="baseConversionRate" class="mt-1 block w-full form-input border-green-300" placeholder="e.g., 5" value="5" min="0" max="100">
+                            <p class="text-xs text-gray-500 mt-1">Rate of traffic successfully starting the operations flow.</p>
+                        </label>
+                    </div>
+
+                    <!-- Column 3: Operational Success -->
+                    <div class="space-y-4">
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">Success Rate Per Step (Base %):</span>
+                            <input type="number" id="baseStepSuccessRate" class="mt-1 block w-full form-input border-green-300" placeholder="e.g., 99" value="99" min="0" max="100">
+                            <p class="text-xs text-gray-500 mt-1">Probabilistic chance that a user completes any single step.</p>
+                        </label>
+                        <div class="p-3 bg-white rounded-lg border border-green-200">
+                            <p class="text-sm font-semibold text-green-700">Profit Margin:</p>
+                            <p class="text-2xl font-bold text-green-600" id="profitMarginDisplay">$30.00</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Risk & Stress Factors -->
+            <section class="mb-8 p-6 bg-red-50 rounded-lg border border-red-200">
+                <h2 class="text-2xl font-bold text-red-700 mb-4">3. Market & Operational Risk Factors</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Column 1: Market Stress -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-red-600">Market & Financial Stress</h3>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">A. Market Demand Volatility:</span>
+                            <select id="marketCondition" class="mt-1 block w-full form-input border-red-300">
+                                <option value="Normal">Normal Market Volatility (+/- 5% sales)</option>
+                                <option value="High Demand">High Demand (+15% base sales - Stress on Scale)</option>
+                                <option value="Low Demand">Low Demand (-15% base sales - Financial Stress)</option>
+                            </select>
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">B. Customer Conversion Stress:</span>
+                            <select id="conversionStress" class="mt-1 block w-full form-input border-red-300">
+                                <option value="None">None (Base Conversion Rate)</option>
+                                <option value="High Friction/Pricing">High Friction/Pricing (Conversion rate reduced by 25%)</option>
+                                <option value="Competitor Intervention">Competitor Intervention (Conversion rate reduced by 40%)</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <!-- Column 2: Operational Stress -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-semibold text-red-600">Operational & Technical Stress</h3>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">C. Operational Bottleneck Factor:</span>
+                            <input type="number" id="opRiskMultiplier" class="mt-1 block w-full form-input border-red-300" placeholder="e.g., 0.95" value="0.95" min="0" max="1" step="0.01">
+                            <p class="text-xs text-gray-500 mt-1">Multiplier applied to Step Success Rate (e.g., 0.95 means 5% of successful steps fail).</p>
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-700 font-medium">D. External/Network Condition (Note):</span>
+                            <input type="text" id="envCondition" class="mt-1 block w-full form-input border-red-300" placeholder="e.g., High database latency, system maintenance">
+                            <p class="text-xs text-gray-500 mt-1">Note any non-MVP external factors (slow internet, server issues) that would make risk worse.</p>
+                        </label>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <button onclick="generateReport()" class="w-full py-5 bg-indigo-600 text-white text-xl font-bold rounded-xl shadow-2xl hover:bg-indigo-700 transition duration-300">
+            RUN 12-MONTH FINANCIAL SIMULATION
+        </button>
+
+        <!-- Report Output Area -->
+        <div id="report-output" class="hidden mt-12 p-8 bg-white border-4 border-dashed border-indigo-300 rounded-xl shadow-inner">
+            <h2 class="text-3xl font-extrabold text-indigo-700 mb-6 border-b pb-2">Financial Risk Assessment Report</h2>
+            <div id="report-content" class="prose max-w-none text-gray-700">
+                <!-- Report content will be inserted here -->
+            </div>
+            <button onclick="window.print()" class="mt-10 px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition duration-150 shadow-lg">
+                Print/Export as PDF
+            </button>
+        </div>
+
+        <!-- Notification Message Box -->
+        <div id="message-box" class="fixed bottom-4 right-4 p-4 bg-indigo-100 text-indigo-800 rounded-lg shadow-lg transition-opacity duration-300 hidden z-50"></div>
+    </div>
+
+    <script>
+        // --- Core Functions ---
+
+        /**
+         * Utility to display temporary messages.
+         * @param {string} message The message to display.
+         */
+        function showMessage(message) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.classList.remove('hidden');
+            box.classList.add('opacity-100');
+            setTimeout(() => {
+                box.classList.add('hidden');
+                box.classList.remove('opacity-100');
+            }, 3000);
+        }
+
+        /**
+         * Calculates and updates the displayed profit margin.
+         */
+        function updateProfitMargin() {
+            const price = parseFloat(document.getElementById('unitPrice').value) || 0;
+            const cost = parseFloat(document.getElementById('unitCost').value) || 0;
+            const margin = price - cost;
+            document.getElementById('profitMarginDisplay').textContent = `$${margin.toFixed(2)}`;
+            document.getElementById('profitMarginDisplay').classList.toggle('risk-color', margin <= 0);
+            document.getElementById('profitMarginDisplay').classList.toggle('profit-color', margin > 0);
+        }
+        
+        // Listeners for real-time margin update
+        document.getElementById('unitPrice').addEventListener('input', updateProfitMargin);
+        document.getElementById('unitCost').addEventListener('input', updateProfitMargin);
+
+
+        /**
+         * Adds a new input field for a flow step.
+         */
+        function addStep() {
+            const container = document.getElementById('flow-steps-container');
+            const flowSteps = container.querySelectorAll('.flow-step');
+            if (flowSteps.length >= 10) {
+                 showMessage("Maximum 10 operations steps reached.");
+                 return;
+            }
+            const stepCount = flowSteps.length + 1;
+            const newGroup = document.createElement('div');
+            newGroup.className = 'step-input-group';
+            newGroup.innerHTML = `
+                <input type="text" placeholder="Step ${stepCount}: Enter business action here" class="flow-step mt-1 block w-full form-input bg-gray-50">
+                <button onclick="removeStep(this)" class="text-red-500 p-2 rounded-full hover:bg-red-100 transition duration-150" aria-label="Remove step">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /></svg>
+                </button>
+            `;
+            container.appendChild(newGroup);
+        }
+
+        /**
+         * Removes a flow step input field.
+         */
+        function removeStep(button) {
+            const group = button.closest('.step-input-group');
+            if (group) {
+                group.remove();
+                showMessage("Operations step removed.");
+            }
+        }
+
+        /**
+         * Generates the structured scenario report, including financial simulation (Monte Carlo style).
+         */
+        function generateReport() {
+            // --- Collect data ---
+            const productName = document.getElementById('productName').value.trim();
+            const targetUser = document.getElementById('targetUser').value.trim();
+            const envCondition = document.getElementById('envCondition').value.trim();
+            const stepInputs = document.querySelectorAll('.flow-step');
+            const flowSteps = Array.from(stepInputs).map(input => input.value.trim()).filter(s => s.length > 0);
+            const numSteps = flowSteps.length;
+
+            // --- Financial & Probabilistic Inputs ---
+            const price = parseFloat(document.getElementById('unitPrice').value);
+            const cost = parseFloat(document.getElementById('unitCost').value);
+            const baseUnitsStarted = parseInt(document.getElementById('unitsSold').value);
+            const opCostPerStep = parseFloat(document.getElementById('operationalCostPerStep').value) || 0;
+            const marketCondition = document.getElementById('marketCondition').value;
+            
+            // New Inputs
+            const baseConversionRate = parseFloat(document.getElementById('baseConversionRate').value) / 100; // e.g., 5 -> 0.05
+            const baseStepSuccessRate = parseFloat(document.getElementById('baseStepSuccessRate').value) / 100; // e.g., 99 -> 0.99
+            const opRiskMultiplier = parseFloat(document.getElementById('opRiskMultiplier').value);
+            const conversionStress = document.getElementById('conversionStress').value;
+
+
+            if (!productName || !targetUser || numSteps < 2 || isNaN(price) || isNaN(cost) || isNaN(baseUnitsStarted) || isNaN(baseConversionRate) || isNaN(baseStepSuccessRate) || isNaN(opRiskMultiplier) || price <= cost) {
+                if (price <= cost) {
+                     showMessage("Error: Unit Price must be greater than Cost per Unit to calculate margin and profit.");
+                } else {
+                    showMessage("Error: Please fill all required fields and ensure at least 2 operations steps are defined.");
+                }
+                return;
+            }
+
+            // --- Monte Carlo Simulation Setup ---
+            const NUM_TRIALS_PER_MONTH = 100; 
+            const BASE_OP_COST = opCostPerStep * numSteps; // Fixed overhead for all steps
+
+            let monthlyResults = [];
+            let totalRevenue = 0, totalCost = 0, totalProfit = 0;
+            let grandTotalLostRevenue = 0;
+            
+            let worstCaseProfit = Infinity;
+            let bestCaseProfit = -Infinity;
+            let worstCaseMonth = null;
+            let bestCaseMonth = null;
+
+            // 1. Determine Conversion Stress Impact
+            let conversionAdjustment = 1.0;
+            if (conversionStress === 'High Friction/Pricing') conversionAdjustment = 0.75; 
+            else if (conversionStress === 'Competitor Intervention') conversionAdjustment = 0.60; 
+            const EFFECTIVE_CONVERSION_RATE = baseConversionRate * conversionAdjustment;
+
+            // 2. Determine Operational Risk Impact
+            const EFFECTIVE_STEP_SUCCESS_RATE = baseStepSuccessRate * opRiskMultiplier;
+
+
+            for (let month = 1; month <= 12; month++) {
+                
+                let monthlyTrialProfits = [];
+                let monthlyTrialUnitsSold = [];
+                
+                // 3. Market Condition Influence (Demand Volatility)
+                let demandMultiplier = 1.0;
+                if (marketCondition === 'High Demand') demandMultiplier = 1.15 + (Math.random() * 0.05); // 15% to 20% boost
+                else if (marketCondition === 'Low Demand') demandMultiplier = 0.85 - (Math.random() * 0.05); // 15% to 20% drop
+                else demandMultiplier = 1.0 + ((Math.random() * 0.10) - 0.05); // +/- 5%
+
+                // Units starting the flow this month
+                const unitsStartedThisMonth = baseUnitsStarted * demandMultiplier;
+
+                for (let trial = 0; trial < NUM_TRIALS_PER_MONTH; trial++) {
+                    
+                    // --- Probabilistic Calculation of Units Sold ---
+                    
+                    // Sales based on Conversion Rate (Probabilistic Drop-off 1)
+                    let unitsConverted = unitsStartedThisMonth * EFFECTIVE_CONVERSION_RATE;
+                    
+                    // Sales based on Step Success Rate (Probabilistic Drop-off 2, compounded)
+                    const flowCompletionProbability = Math.pow(EFFECTIVE_STEP_SUCCESS_RATE, numSteps);
+
+                    // Final units sold in this trial
+                    let actualUnits = unitsConverted * flowCompletionProbability * (1 + (Math.random() * 0.02 - 0.01)); // Minor internal volatility
+                    actualUnits = Math.max(0, actualUnits); 
+                    
+                    const trialRevenue = price * actualUnits;
+                    const trialCost = (cost * actualUnits) + BASE_OP_COST;
+                    const trialProfit = trialRevenue - trialCost;
+
+                    monthlyTrialProfits.push(trialProfit);
+                    monthlyTrialUnitsSold.push(actualUnits);
+                }
+                
+                // 4. Aggregate 100 Trials for Monthly Average
+                const avgProfit = monthlyTrialProfits.reduce((a, b) => a + b, 0) / NUM_TRIALS_PER_MONTH;
+                const avgUnitsSold = monthlyTrialUnitsSold.reduce((a, b) => a + b, 0) / NUM_TRIALS_PER_MONTH;
+                
+                const avgRevenue = price * avgUnitsSold;
+                const avgCost = (cost * avgUnitsSold) + BASE_OP_COST;
+
+                // Calculate lost sales compared to "Perfect Flow" (Base conversion + 100% step success)
+                const unitsIfPerfect = baseUnitsStarted * demandMultiplier * baseConversionRate; // Max units converted
+                const unitsLost = unitsIfPerfect - avgUnitsSold;
+                const lostRevenue = unitsLost * price;
+                grandTotalLostRevenue += lostRevenue;
+
+                // Update Overall Best/Worst Cases
+                if (avgProfit < worstCaseProfit) {
+                    worstCaseProfit = avgProfit;
+                    worstCaseMonth = month;
+                }
+                if (avgProfit > bestCaseProfit) {
+                    bestCaseProfit = avgProfit;
+                    bestCaseMonth = month;
+                }
+
+                monthlyResults.push({ 
+                    month, 
+                    monthlyRevenue: avgRevenue, 
+                    monthlyCost: avgCost, 
+                    monthlyProfit: avgProfit, 
+                    unitsSold: avgUnitsSold,
+                    lostRevenue: lostRevenue,
+                    // Use unitsConverted (max possible units after initial conversion) as the base for lost sales
+                    lostSalesPercent: ((unitsLost / unitsIfPerfect) * 100)
+                });
+                
+                totalRevenue += avgRevenue;
+                totalCost += avgCost;
+                totalProfit += avgProfit;
+            }
+            
+            // --- Build Flow Steps HTML ---
+            let flowListHtml = flowSteps.map((step, idx) => `<li class="mb-1 text-gray-700 font-medium">**Step ${idx + 1}:** ${step}</li>`).join('');
+
+            // --- Build Financial Summary HTML ---
+            let financialHtml = `
+                <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-2 border-b pb-2">E. Projected 12-Month Financial Performance</h3>
+                <p class="text-sm text-gray-500 mb-4">Results are the average across ${NUM_TRIALS_PER_MONTH} Monte Carlo trials per month, reflecting real-world volatility.</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-300 rounded mb-4 text-sm">
+                        <thead class="bg-indigo-100">
+                            <tr>
+                                <th class="border px-4 py-2 text-left">Month</th>
+                                <th class="border px-4 py-2">Avg. Revenue ($)</th>
+                                <th class="border px-4 py-2">Avg. Cost ($)</th>
+                                <th class="border px-4 py-2">Avg. Profit ($)</th>
+                                <th class="border px-4 py-2 risk-color">% Sales Lost (Friction)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${monthlyResults.map(r => `<tr>
+                                <td class="border px-4 py-2">${r.month}</td>
+                                <td class="border px-4 py-2 text-right">${r.monthlyRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="border px-4 py-2 text-right">${r.monthlyCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="border px-4 py-2 text-right font-bold ${r.monthlyProfit < 0 ? 'risk-color' : 'profit-color'}">${r.monthlyProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="border px-4 py-2 text-right risk-color">${r.lostSalesPercent.toFixed(1)}%</td>
+                            </tr>`).join('')}
+                            <tr class="font-bold bg-indigo-50">
+                                <td class="border px-4 py-2">Total (Projected Average)</td>
+                                <td class="border px-4 py-2 text-right">${totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="border px-4 py-2 text-right">${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="border px-4 py-2 text-right text-xl profit-color">${totalProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="border px-4 py-2 text-right risk-color"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // --- Build Report Content ---
+            const reportHtml = `
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">A. Scenario Context: ${productName} for ${targetUser}</h3>
+                <p class="mb-6">This simulation assesses the financial viability of the MVP under defined market and operational stresses. The flow involves **${numSteps}** critical steps.</p>
+
+                <h4 class="text-lg font-semibold text-gray-700 mb-2">B. Operational Process and Friction</h4>
+                <ol class="list-decimal pl-5 space-y-2 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    ${flowListHtml}
+                </ol>
+
+                <h4 class="text-lg font-semibold text-gray-700 mb-2">C. Applied Stressors and Assumptions</h4>
+                <ul class="list-disc pl-5 space-y-3 mb-8">
+                    <li>
+                        <strong class="text-red-600">Initial Conversion Stress:</strong> The base conversion rate was adjusted to **${(EFFECTIVE_CONVERSION_RATE * 100).toFixed(2)}%** due to: <span class="font-mono bg-yellow-100 p-1 rounded text-sm">${conversionStress}</span>.
+                    </li>
+                    <li>
+                        <strong class="text-red-600">Operational Drop-off Risk:</strong> The Step Success Rate of ${(baseStepSuccessRate * 100).toFixed(2)}% was reduced by **${(1 - opRiskMultiplier) * 100}%** to simulate bottlenecks, resulting in an effective rate of **${(EFFECTIVE_STEP_SUCCESS_RATE * 100).toFixed(2)}%** per step.
+                    </li>
+                    <li>
+                        <strong class="text-red-600">Market Volatility:</strong> Assumed **${marketCondition}** volatility throughout the year.
+                    </li>
+                    <li>
+                        <strong class="text-red-600">External Technical Note:</strong> ${envCondition || 'No external note defined.'}
+                    </li>
+                </ul>
+
+                <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-4 border-b pb-2">D. Key Financial Risk Findings (12-Month Projection)</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="p-4 bg-red-100 border-l-4 border-red-600 text-red-800 rounded-lg">
+                        <p class="font-bold text-sm">TOTAL LOST REVENUE (Friction Cost)</p>
+                        <p class="text-2xl font-extrabold">$${grandTotalLostRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                    </div>
+                    <div class="p-4 bg-blue-100 border-l-4 border-blue-600 text-blue-800 rounded-lg">
+                        <p class="font-bold text-sm">WORST-CASE MONTHLY PROFIT</p>
+                        <p class="text-2xl font-extrabold">$${worstCaseProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                    </div>
+                    <div class="p-4 bg-green-100 border-l-4 border-green-600 text-green-800 rounded-lg">
+                        <p class="font-bold text-sm">TOTAL PROJECTED PROFIT (Under Stress)</p>
+                        <p class="text-2xl font-extrabold">$${totalProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                    </div>
+                </div>
+                
+                ${financialHtml}
+            `;
+
+            document.getElementById('report-content').innerHTML = reportHtml;
+            document.getElementById('report-output').classList.remove('hidden');
+            
+            // Scroll to report
+            document.getElementById('report-output').scrollIntoView({ behavior: 'smooth' });
+            showMessage("Financial Risk Report generated successfully!");
+        }
+
+        // Initialize default steps and profit margin on load
+        window.onload = function() {
+            const container = document.getElementById('flow-steps-container');
+            container.innerHTML = ''; 
+
+            // Add standard starting steps
+            document.getElementById('flow-steps-container').innerHTML = `
+                <div class="step-input-group">
+                    <input type="text" value="Customer acquisition / Landing page view." placeholder="Step 1: Start Flow" class="flow-step mt-1 block w-full form-input bg-gray-50">
+                    <button onclick="removeStep(this)" class="text-red-500 p-2 rounded-full hover:bg-red-100 transition duration-150" aria-label="Remove step">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+                <div class="step-input-group">
+                    <input type="text" value="Core service configuration and user input." placeholder="Step 2: Core Action" class="flow-step mt-1 block w-full form-input bg-gray-50">
+                    <button onclick="removeStep(this)" class="text-red-500 p-2 rounded-full hover:bg-red-100 transition duration-150" aria-label="Remove step">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+                <div class="step-input-group">
+                    <input type="text" value="Final payment processing and order confirmation (Revenue Point)." placeholder="Step 3: Critical Action" class="flow-step mt-1 block w-full form-input bg-gray-50">
+                    <button onclick="removeStep(this)" class="text-red-500 p-2 rounded-full hover:bg-red-100 transition duration-150" aria-label="Remove step">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `;
+            updateProfitMargin();
+        }
+    </script>
+
+</body>
+</html>
